@@ -1,0 +1,175 @@
+#version=RHEL8
+# Use graphical install
+##graphical
+text 
+
+##repo --name="AppStream" --baseurl=file:///run/install/sources/mount-0000-cdrom/AppStream
+repo --name="AppStream" --baseurl=http://192.168.1.2/centos8/AppStream
+
+url --url="http://192.168.1.2/centos8"
+
+%packages
+@^minimal-environment
+@standard
+@system-tools
+@security-tools
+kexec-tools
+vim
+%end
+
+# Keyboard layouts
+keyboard --xlayouts='fr'
+# System language
+lang en_US.UTF-8
+
+# Network information
+network  --bootproto=dhcp --device=ens33 --noipv6 --activate --nameserver=8.8.8.8 --nodefroute
+network  --bootproto=dhcp --device=ens37 --noipv6 --activate --nameserver=8.8.8.8
+network  --hostname=centos8.esgi.local
+
+# Use CDROM installation media
+##cdrom # si on commente pas ça les repos AppStream ne marchent pas
+
+# Run the Setup Agent on first boot
+firstboot --disable
+
+ignoredisk --only-use=sda
+# Partition clearing information
+##clearpart --none --initlabel
+clearpart --all --initlabel
+# Disk partitioning information
+part /boot --fstype="ext2" --ondisk=sda --size=500 --label=BOOT
+part pv.492 --fstype="lvmpv" --ondisk=sda --size=60936 --encrypted --luks-version=luks1 --cipher=aes-xts-plain64 --pbkdf-time=5000 --passphrase=!Linux2021
+volgroup VGCRYPT --pesize=4096 pv.492
+logvol / --fstype="ext4" --size=20480 --label="ROOT" --name=root --vgname=VGCRYPT
+logvol /tmp --fstype="xfs" --size=3073 --label="TEMP" --name=tmp --vgname=VGCRYPT
+logvol /home --fstype="xfs" --size=10240 --label="HOME" --name=home --vgname=VGCRYPT
+logvol swap --fstype="swap" --size=1536 --name=swap --vgname=VGCRYPT
+logvol /var --fstype="ext4" --size=25600 --label="VAR" --name=var --vgname=VGCRYPT
+
+# System timezone
+timezone Europe/Paris --isUtc --nontp
+
+# Root password
+rootpw --iscrypted $6$jdfC96LjLkjTClz7$ikVRBBdqQlyyIPoqjGnCiqr.kxAGPHxNeSuLnDQjB3iiIr48h5sBPdkBDNFflBRiBF6QMPgyAoCCTaHDi3.pP.
+user --groups=wheel --name=esgi --password=$6$j2rTkksRHCvpYkXH$uwYtYXSB46EhYb.2wL7RgQNZ0r8kdJ4Xc.sw38FNbPDYYXjYouVAFGyTmj7hCELkuCByDS8Pzc3rahoGqC1h20 --iscrypted --gecos="Esgi"
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
+
+%post --log=/root/ks-post.log
+# Install Lynis & ClamaV
+dnf conf-manager --set-enabled powertools
+dnf makecache
+dnf install epel-release -y
+dnf update -y
+dnf install clamav clamd clamav-update -y
+dnf install lynis -y
+dnf install fail2ban -y
+dnf install dnf-automatic -y
+
+systemctl enable fail2ban
+systemctl start fail2ban
+
+## Firewall
+ufw enable
+ufw default allow outgoing
+ufw default deny incoming
+ufw allow http
+ufw allow https
+ufw allow dhcp
+ufw allow dns
+ufw allow 61712
+
+### Secure sshd_config file
+sed -i 's/#LogLevel INFO/LogLevel VERBOSE/' /etc/ssh/sshd_config
+
+sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+
+sed -i 's/#Port 22/Port 61712/' /etc/ssh/sshd_config
+
+sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+sed -i 's/#MaxSessions 10/MaxSessions 2/' /etc/ssh/sshd_config
+
+sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
+
+echo "MaxAuthTries 3" >> /etc/ssh/sshd_config
+
+sed -i 's/#PermitEmptyPassword no/PermitEmptyPassword no/' /etc/ssh/sshd_config
+
+sed -i 's/#AllowTcpForwarding yes/AllowTcpForwarding no/' /etc/ssh/sshd_config
+
+sed -i 's/X11Forwarding yes/X11Forwarding no/' /etc/ssh/sshd_config
+
+sed -i 's/#ClientAliveCountMax 3/ClientAliveCountMax 2/' /etc/ssh/sshd_config
+
+sed -i 's/#Compression delayed/Compression no/' /etc/ssh/sshd_config
+
+sed -i 's/#TCPKeepAlive yes/TCPKeepAlive no/' /etc/ssh/sshd_config
+
+sed -i 's/#AllowAgentForwarding yes/AllowAgentForwarding no/' /etc/ssh/sshd_config
+
+# Bashrc
+sed -i 's/umask 002/umask 007/' /etc/bashrc
+sed -i 's/umask 022/umask 027/' /etc/bashrc
+
+# Profile
+sed -i 's/umask 002/umask 007/' /etc/profile
+sed -i 's/umask 022/umask 027/' /etc/profile
+
+# Grub modification
+sed -i '$a set superusers="grubroot"' /etc/grub.d/40_custom
+grub_mdp_hash='echo -e "root\nroot"| grub-mkpassword-pbkdf2| tail -1| cut -d " " -f9'
+sed -i '$a password_pbkdf2 grub HASH' /etc/grub.d/40_custom
+sed -i '/HASH/s/HASH/$grub_mdp_hash/' /etc/grub.d/40_custom
+sed -i 's/--class os/--class os --unrestricted/g' /etc/grub.d/10_linux
+sed -i 's/=5/=20/' /etc/default/grub
+sed -i 's/quiet/vga=791/' /etc/default/grub
+update-grub
+
+# Generate SSH keys
+mkdir -p ~/.ssh
+chmod -v 700 ~/.ssh
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -q -N ""
+
+# ClamaV
+# SELinux configuration
+setsebool -P antivirus_can_scan_system 1 
+freshclam
+
+#Service systemd
+cat <<EOT >> /usr/lib/systemd/system/freshclam.service
+[Unit]
+Description = ClamAV Scanner
+After = network.target
+
+[Service]
+Type = forking
+# if you want to scan more than one in a day change the number 1 with your desired number in below line.
+ExecStart = /usr/bin/freshclam -d -c 1
+Restart = on-failure
+PrivateTmp =true
+
+[Install]
+WantedBy=multi-user.target
+EOT
+
+systemctl start clamd@scan
+systemctl start freshclam
+systemctl enable clamd@scan
+systemctl enable freshclam
+
+
+lynis audit system --report-file /root/lynis.result
+
+%end
+
+reboot
