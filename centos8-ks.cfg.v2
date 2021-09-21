@@ -1,6 +1,4 @@
 #version=RHEL8
-# Use graphical install
-##graphical
 text 
 
 ##repo --name="AppStream" --baseurl=file:///run/install/sources/mount-0000-cdrom/AppStream
@@ -85,7 +83,7 @@ pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
 pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %end
 
-%post --log=/root/ks-post.log
+%post --log=/root/kickstart-post.log
 # Install Lynis & ClamaV
 dnf conf-manager --set-enabled powertools
 dnf makecache
@@ -189,7 +187,7 @@ systemctl enable clamd@scan
 systemctl enable freshclam
 
 
-lynis audit system --report-file /root/lynis.result
+lynis audit system --report-file /root/lynis_result.txt
 
 %end
 

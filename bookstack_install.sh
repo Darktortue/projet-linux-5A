@@ -16,7 +16,8 @@ sleep 1
 sed -i s/^SELINUX=.*$/SELINUX=disabled/ /etc/selinux/config && setenforce 0
 firewall-cmd --add-service=http --permanent && firewall-cmd --add-service=https --permanent && firewall-cmd --reload
 echo
-echo "Done !"
+echo "SELinux disabled but you might have to reboot the machine in you face issues."
+echo
 
 sleep 1
 
@@ -37,7 +38,7 @@ dnf module -y enable php:remi-7.3
 ### PACKAGES INSTALLATION ###########################################################################################################
 dnf update -y
 dnf install epel-release -y
-dnf install unzip mariadb-server nginx php php-cli php-fpm php-json php-gd php-mysqlnd php-xml php-openssl php-tokenizer php-mbstring -y
+dnf install unzip mariadb-server nginx php php-cli php-fpm php-json php-gd php-mysqlnd php-xml php-openssl php-tokenizer php-mbstring git -y
 echo
 echo "Done !"
 
@@ -69,7 +70,7 @@ echo "Done !"
 sleep 1
 echo
 
-### PHP-FPM setup ###############################################################################################################
+### PHP-FPM setup ###################################################################################################################
 echo "PHP-FPM configuration..."
 sleep 1
 fpmconf=/etc/php-fpm.d/www.conf
@@ -85,7 +86,7 @@ echo "Done !"
 sleep 1
 echo
 
-### SSL CERT ####################################################################################################################
+### SSL CERT ########################################################################################################################
 #Unable to perform this operation on ESGI's network that's why it's commented
 #echo -e "Remember to setup an A record and to open port 80 or 443 in order for certbot to establish a connection to generate certificates..."
 #sleep 4
@@ -96,7 +97,7 @@ echo
 #cp -v /etc/letsencrypt/live/"$DOMAIN"/fullchain.pem /etc/nginx/certificats
 #cp -v /etc/letsencrypt/live/"$DOMAIN"/privkey.pem /etc/nginx/certificats
 
-### SELF SIGNED SSL CERT ########################################################################################################
+### SELF SIGNED SSL CERT ############################################################################################################
 echo "Generating SSL certificate..."
 sleep 1
 mkdir -vp /etc/nginx/certificats
@@ -117,7 +118,7 @@ echo "Done !"
 sleep 1
 echo
 
-### NGINX SETUP #################################################################################################################
+### NGINX SETUP #####################################################################################################################
 echo "Nginx configuration..."
 sleep 1
 mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
@@ -229,9 +230,10 @@ echo "Done !"
 sleep 1
 echo
 
-### BOOKSTACK INSTALLATION ################################################################################################################
+### BOOKSTACK INSTALLATION ##########################################################################################################
 echo "BookStack installation..."
 sleep 1
+mkdir -vp ${BOOKSTACK_DIR}
 mkdir -vp ${VARWWW}/sessions # php sessions
 
 # Clone the latest from the release branch
@@ -284,4 +286,5 @@ chmod -R 755 bootstrap/cache public/uploads storage
 echo -e "\n\n"
 echo -e "\t * 1 * PLEASE NOTE the MariaDB password root:${DB_ROOT}"
 echo -e "\t * 2 * AND DELETE the file ${TMPROOTPWD}"
-echo -e "\t * 3 * CONNECT to https://wiki.esgi.local or https://${CURRENT_IP} with default credentials = admin@admin.com:password"
+echo -e "\t * 3 * REMEMBER TO SETUP YOUR /ETC/HOSTS FILE IN ORDER TO ACCESS THE BOOKSTACK SERVER"
+echo -e "\t * 4 * CONNECT to https://wiki.esgi.local with default credentials = admin@admin.com:password"
