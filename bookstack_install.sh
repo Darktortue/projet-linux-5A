@@ -7,7 +7,6 @@ VARWWW="/var/www"
 BOOKSTACK_DIR="${VARWWW}/bookstack"
 DBROOTPWD="/root/.db_root.txt"
 REMIRPM="http://rpms.remirepo.net/enterprise/remi-release-8.rpm"
-CURRENT_IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
 #DOMAIN="wiki.darktortue.icu" Please see line 89
 
 
@@ -16,7 +15,7 @@ sleep 1
 sed -i s/^SELINUX=.*$/SELINUX=disabled/ /etc/selinux/config && setenforce 0
 firewall-cmd --add-service=http --permanent && firewall-cmd --add-service=https --permanent && firewall-cmd --reload
 echo
-echo "SELinux disabled but you might have to reboot the machine in you face issues."
+echo "SELinux disabled but you might have to reboot the machine if you face issues."
 echo
 
 sleep 1
@@ -38,7 +37,7 @@ dnf module -y enable php:remi-7.3
 ### PACKAGES INSTALLATION ###########################################################################################################
 dnf update -y
 dnf install epel-release -y
-dnf install unzip mariadb-server nginx php php-cli php-fpm php-json php-gd php-mysqlnd php-xml php-openssl php-tokenizer php-mbstring git -y
+dnf install unzip mariadb-server wget nginx php php-cli php-fpm php-json php-gd php-mysqlnd php-xml php-openssl php-tokenizer php-mbstring git -y
 echo
 echo "Done !"
 
@@ -243,7 +242,7 @@ echo
 echo "Composer installation..."
 sleep 1
 php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+php -r "if (hash_file('sha384', 'composer-setup.php') === '906a84df04cea2aa72f40b5f787e49f22d4c2f19492ac310e8cba5b96ac8b64115ac402c8cd292b8a03482574915d1a8') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
 php composer-setup.php --install-dir=/usr/local/bin --filename=composer
 php -r "unlink('composer-setup.php');"
 export COMPOSER_ALLOW_SUPERUSER=1
