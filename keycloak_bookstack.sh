@@ -2,7 +2,7 @@
 
 ### Keycloak & Bookstack setup ######################################################################################################
 
-dnf install wget java-1.8.0-openjdk-devel -y
+dnf install java-1.8.0-openjdk-devel -y
 java -version
 useradd -s /sbin/nologin -r keycloak
 version=15.0.2
