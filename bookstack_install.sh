@@ -5,7 +5,7 @@
 ### VARIABLES #######################################################################################################################
 VARWWW="/var/www"
 BOOKSTACK_DIR="${VARWWW}/bookstack"
-TMPROOTPWD="/tmp/DB_ROOT.delete"
+DBROOTPWD="/root/.db_root.txt"
 REMIRPM="http://rpms.remirepo.net/enterprise/remi-release-8.rpm"
 CURRENT_IP=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/')
 #DOMAIN="wiki.darktortue.icu" Please see line 89
@@ -61,7 +61,7 @@ MYSQL_SCRIPT
 # Set mysql root password
 DB_ROOT=$(< /dev/urandom tr -cd 'A-Za-z0-9' | head -c 14)
 echo
-echo "MariaDB root:${DB_ROOT}" >> $TMPROOTPWD && cat $TMPROOTPWD
+echo "MariaDB root:${DB_ROOT}" >> $DBROOTPWD && cat $DBROOTPWD
 echo
 mysql -e "SET PASSWORD FOR root@localhost = PASSWORD('${DB_ROOT}');FLUSH PRIVILEGES;"
 echo
@@ -285,6 +285,5 @@ chmod -R 755 bootstrap/cache public/uploads storage
 
 echo -e "\n\n"
 echo -e "\t * 1 * PLEASE NOTE the MariaDB password root:${DB_ROOT}"
-echo -e "\t * 2 * AND DELETE the file ${TMPROOTPWD}"
-echo -e "\t * 3 * REMEMBER TO SETUP YOUR /ETC/HOSTS FILE IN ORDER TO ACCESS THE BOOKSTACK SERVER"
-echo -e "\t * 4 * CONNECT to https://wiki.esgi.local with default credentials = admin@admin.com:password"
+echo -e "\t * 2 * REMEMBER TO SETUP YOUR /ETC/HOSTS FILE IN ORDER TO ACCESS THE BOOKSTACK SERVER"
+echo -e "\t * 3 * CONNECT to https://wiki.esgi.local with default credentials = admin@admin.com:password"
