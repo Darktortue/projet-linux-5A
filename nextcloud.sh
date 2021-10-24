@@ -55,6 +55,9 @@ server {
     listen [::]:80;
     server_name cloud.esgi.local;
 
+    access_log  /var/log/nginx/nextcloud_access.log;
+    error_log  /var/log/nginx/nextcloud_error.log;
+
     # Enforce HTTPS
     return 301 https://$server_name$request_uri;
 }
@@ -63,6 +66,9 @@ server {
     listen 443      ssl http2;
     listen [::]:443 ssl http2;
     server_name cloud.esgi.local;
+
+    access_log  /var/log/nginx/nextcloud_access.log;
+    error_log  /var/log/nginx/nextcloud_error.log;
 
     # Use Mozilla's guidelines for SSL/TLS settings
     # https://mozilla.github.io/server-side-tls/ssl-config-generator/
